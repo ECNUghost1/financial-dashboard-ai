@@ -44,7 +44,8 @@ export const useTransactionHistory = (recordId: string | null) => {
     if (!recordId) return false;
 
     try {
-      const { error } = await supabase
+      // 1. 创建变更记录
+      const { error: insertError } = await supabase
         .from('transaction_history')
         .insert({
           record_id: recordId,
@@ -54,8 +55,23 @@ export const useTransactionHistory = (recordId: string | null) => {
           effective_date: effectiveDate ? toLocalISOString(effectiveDate) : new Date().toISOString()
         });
 
-      if (error) {
-        console.error('Failed to create transaction:', error);
+      if (insertError) {
+        console.error('Failed to create transaction:', insertError);
+        return false;
+      }
+
+      // 2. 同步更新理财记录的当前值
+      const updateField = type === 'principal' ? 'principal' : 'interest_rate';
+      const { error: updateError } = await supabase
+        .from('financial_records')
+        .update({
+          [updateField]: newValue,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', recordId);
+
+      if (updateError) {
+        console.error('Failed to update record:', updateError);
         return false;
       }
 

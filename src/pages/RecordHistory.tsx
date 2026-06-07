@@ -58,6 +58,11 @@ export const RecordHistory: React.FC = () => {
     );
     
     if (success) {
+      // 重新获取理财记录以显示更新后的值
+      const updatedRecord = await getRecordById(id || '');
+      if (updatedRecord) {
+        setRecord(updatedRecord);
+      }
       setShowAddModal(false);
       setNewValue('');
       setEffectiveDate('');
