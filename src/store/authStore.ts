@@ -23,11 +23,14 @@ async function fetchUserProfileWithTimeout(authUser: { id: string; email?: strin
   return new Promise<User>((resolve) => {
     const timeout = setTimeout(() => resolve(fallbackUser), timeoutMs);
 
-    supabase
-      .from('profiles')
-      .select('username, created_at')
-      .eq('id', authUser.id)
-      .single()
+    // 使用 Promise.resolve 包装以支持 catch
+    Promise.resolve(
+      supabase
+        .from('profiles')
+        .select('username, created_at')
+        .eq('id', authUser.id)
+        .single()
+    )
       .then(({ data: profile, error }) => {
         clearTimeout(timeout);
         if (error || !profile) {
