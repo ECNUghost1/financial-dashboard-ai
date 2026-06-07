@@ -23,12 +23,12 @@ export const LoginForm: React.FC = () => {
       return;
     }
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('邮箱或密码错误');
+      setError(result.error || '邮箱或密码错误');
     }
     
     setLoading(false);

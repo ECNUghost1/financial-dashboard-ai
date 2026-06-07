@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  password: string;
+  password?: string; // Supabase 认证不返回密码，改为可选
   username?: string;
   created_at: string;
 }

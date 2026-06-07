@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../store/authStore';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 
-export const RegisterForm: React.FC = () => {
+interface RegisterFormProps {
+  onSuccess?: () => void;
+}
+
+export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
   const register = useAuthStore((state) => state.register);
   const [username, setUsername] = useState('');
@@ -40,6 +44,7 @@ export const RegisterForm: React.FC = () => {
     const result = await register(email, password, username);
     
     if (result.success) {
+      onSuccess?.();
       navigate('/dashboard');
     } else {
       setError(result.error || '该邮箱已被注册');
@@ -50,12 +55,12 @@ export const RegisterForm: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-500 to-cyan-500 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 animate-slide-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-4">
             <UserPlus className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">理财看板</h1>
+          <h1 className="text-2xl font-bold text-gray-800">注册</h1>
           <p className="text-gray-500 mt-2">创建您的账户</p>
         </div>
 

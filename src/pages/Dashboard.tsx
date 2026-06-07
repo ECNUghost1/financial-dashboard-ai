@@ -1,17 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/Layout/DashboardLayout';
 import { StatCard } from '../components/Dashboard/StatCard';
 import { RecordCard } from '../components/Dashboard/RecordCard';
 import { useAuthStore } from '../store/authStore';
 import { useRecords } from '../hooks/useRecords';
 import { formatCurrencyWithSymbol } from '../utils/exchangeRate';
-import { FileText, RefreshCw } from 'lucide-react';
+import { migrateFromLocalStorage, checkLegacyData } from '../utils/migration';
+import { FileText, RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const user = useAuthStore((state) => state.user);
-  const { loading, deleteRecord, updateRecord, duplicateRecord, getSummary, getActiveRecords, getExpiredRecords, exchangeRates } = useRecords(user?.id || null);
+  const { loading, deleteRecord, updateRecord, duplicateRecord, getSummary, getActiveRecords, getExpiredRecords, exchangeRates, loadRecords } = useRecords(user?.id || null);
   const summary = getSummary();
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
+  
+  // 数据迁移相关状态
+  const [hasLegacyData, setHasLegacyData] = useState(false);
+  const [legacyRecordCount, setLegacyRecordCount] = useState(0);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationMessage, setMigrationMessage] = useState('');
+
+  // 检查是否有旧数据
+  useEffect(() => {
+    const legacyData = checkLegacyData();
+    setHasLegacyData(legacyData.hasLegacyData);
+    setLegacyRecordCount(legacyData.recordCount);
+  }, []);
+
+  // 执行数据迁移
+  const handleMigrate = async () => {
+    setMigrating(true);
+    setMigrationMessage('');
+    
+    const result = await migrateFromLocalStorage();
+    
+    if (result.success) {
+      setMigrationMessage(result.message);
+      setHasLegacyData(false);
+      setLegacyRecordCount(0);
+      // 重新加载记录
+      await loadRecords();
+    } else {
+      setMigrationMessage(result.message);
+    }
+    
+    setMigrating(false);
+  };
 
   const activeRecords = getActiveRecords();
   const expiredRecords = getExpiredRecords();
@@ -69,6 +103,50 @@ export const Dashboard: React.FC = () => {
           subtitle={summary.upcomingExpirations > 0 ? '请留意到期时间' : '暂无即将到期'}
         />
       </div>
+
+      {/* 数据迁移提示 */}
+      {hasLegacyData && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Database className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-medium text-amber-800">发现本地数据</h4>
+              <p className="text-sm text-amber-600">检测到您之前存储的 {legacyRecordCount} 条理财记录，需要迁移到云端吗？</p>
+            </div>
+          </div>
+          <button
+            onClick={handleMigrate}
+            disabled={migrating}
+            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {migrating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                迁移中...
+              </>
+            ) : (
+              <>立即迁移</>
+            )}
+          </button>
+        </div>
+      )}
+
+      {migrationMessage && (
+        <div className={`rounded-xl p-4 mb-8 flex items-center gap-3 ${
+          migrationMessage.includes('失败') 
+            ? 'bg-red-50 border border-red-200' 
+            : 'bg-green-50 border border-green-200'
+        }`}>
+          <AlertCircle className={`w-5 h-5 ${
+            migrationMessage.includes('失败') ? 'text-red-500' : 'text-green-500'
+          }`} />
+          <span className={migrationMessage.includes('失败') ? 'text-red-700' : 'text-green-700'}>
+            {migrationMessage}
+          </span>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useRecords } from '../../hooks/useRecords';
+import { Save, ArrowLeft, Calculator } from 'lucide-react';
 import { calculateDailyInterest, calculateMonthlyInterest } from '../../utils/calculations';
 import { formatCurrencyWithSymbol } from '../../utils/exchangeRate';
-import { ArrowLeft, Save, Calculator } from 'lucide-react';
+import { toLocalISOString, toDatetimeLocal } from '../../utils/timezone';
 import type { FinancialRecord, CurrencyType } from '../../types';
 
 const CURRENCIES: { value: CurrencyType; label: string }[] = [
@@ -48,10 +49,10 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
           principal: record.principal.toString(),
           interest_rate: record.interest_rate.toString(),
           currency: record.currency,
-          start_date: record.start_date,
-          end_date: record.end_date || '',
+          start_date: toDatetimeLocal(record.start_date),
+          end_date: toDatetimeLocal(record.end_date) || '',
           is_long_term: record.is_long_term,
-          redemption_date: record.redemption_date || '',
+          redemption_date: toDatetimeLocal(record.redemption_date) || '',
         });
       }
     }
@@ -90,10 +91,10 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
       principal,
       interest_rate: interestRate,
       currency: formData.currency,
-      start_date: formData.start_date,
-      end_date: formData.is_long_term ? undefined : formData.end_date || undefined,
+      start_date: toLocalISOString(formData.start_date),
+      end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
       is_long_term: formData.is_long_term,
-      redemption_date: formData.redemption_date || undefined,
+      redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
     };
 
     if (type === 'add') {

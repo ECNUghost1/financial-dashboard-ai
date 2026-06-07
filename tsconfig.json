@@ -1,4 +1,14 @@
 {
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@financial/auth": ["packages/auth/src"],
+      "@financial/auth/store": ["packages/auth/src/store"],
+      "@financial/auth/components": ["packages/auth/src/components"],
+      "@financial/auth/hooks": ["packages/auth/src/hooks"],
+      "@financial/auth/types": ["packages/auth/src/types"]
+    }
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
