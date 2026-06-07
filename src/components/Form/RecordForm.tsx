@@ -215,7 +215,14 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
               <input
                 type="datetime-local"
                 value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                onChange={(e) => {
+                  let value = e.target.value;
+                  // 如果只选择了日期，默认时间为08:00
+                  if (value && value.length === 10) {
+                    value += 'T08:00';
+                  }
+                  setFormData({ ...formData, end_date: value });
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
             </div>
@@ -226,7 +233,14 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
             <input
               type="datetime-local"
               value={formData.redemption_date}
-              onChange={(e) => setFormData({ ...formData, redemption_date: e.target.value })}
+              onChange={(e) => {
+                let value = e.target.value;
+                // 如果只选择了日期，默认时间为08:00
+                if (value && value.length === 10) {
+                  value += 'T08:00';
+                }
+                setFormData({ ...formData, redemption_date: value });
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               placeholder="设置赎回日期后，将按实际持有天数计算收益"
             />
