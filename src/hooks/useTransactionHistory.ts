@@ -85,13 +85,41 @@ export const useTransactionHistory = (recordId: string | null) => {
 
   const deleteTransaction = useCallback(async (transactionId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      // 先获取要删除的交易记录信息
+      const { data: transaction, error: fetchError } = await supabase
+        .from('transaction_history')
+        .select('type, old_value')
+        .eq('id', transactionId)
+        .single();
+
+      if (fetchError) {
+        console.error('Failed to fetch transaction:', fetchError);
+        return false;
+      }
+
+      // 删除交易记录
+      const { error: deleteError } = await supabase
         .from('transaction_history')
         .delete()
         .eq('id', transactionId);
 
-      if (error) {
-        console.error('Failed to delete transaction:', error);
+      if (deleteError) {
+        console.error('Failed to delete transaction:', deleteError);
+        return false;
+      }
+
+      // 回滚理财记录的值到变更前的值
+      const updateField = transaction.type === 'principal' ? 'principal' : 'interest_rate';
+      const { error: updateError } = await supabase
+        .from('financial_records')
+        .update({
+          [updateField]: transaction.old_value,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', recordId);
+
+      if (updateError) {
+        console.error('Failed to update record:', updateError);
         return false;
       }
 
@@ -101,7 +129,7 @@ export const useTransactionHistory = (recordId: string | null) => {
       console.error('Failed to delete transaction:', error);
       return false;
     }
-  }, [fetchTransactions]);
+  }, [recordId, fetchTransactions]);
 
   return {
     transactions,

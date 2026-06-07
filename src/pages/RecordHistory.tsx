@@ -70,7 +70,14 @@ export const RecordHistory: React.FC = () => {
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    await deleteTransaction(transactionId);
+    const success = await deleteTransaction(transactionId);
+    if (success) {
+      // 重新获取理财记录以显示更新后的值
+      const updatedRecord = await getRecordById(id || '');
+      if (updatedRecord) {
+        setRecord(updatedRecord);
+      }
+    }
   };
 
   const getTransactionTypeName = (type: TransactionType) => {

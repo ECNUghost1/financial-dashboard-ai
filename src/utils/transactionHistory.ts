@@ -43,9 +43,16 @@ export const generateInterestPeriods = (
   const periods: InterestPeriod[] = [];
   
   const startDate = new Date(record.start_date);
-  const endDate = record.redemption_date 
-    ? new Date(record.redemption_date) 
-    : new Date();
+  
+  // 确定最终结束日期：优先使用赎回日期，然后是截止日期，最后是当前日期
+  let endDate: Date;
+  if (record.redemption_date) {
+    endDate = new Date(record.redemption_date);
+  } else if (record.end_date && !record.is_long_term) {
+    endDate = new Date(record.end_date);
+  } else {
+    endDate = new Date();
+  }
   
   if (startDate >= endDate) {
     return periods;
