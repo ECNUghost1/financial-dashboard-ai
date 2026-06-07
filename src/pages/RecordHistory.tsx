@@ -139,7 +139,13 @@ export const RecordHistory: React.FC = () => {
               <h2 className="font-semibold text-gray-800">交易历史记录</h2>
             </div>
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                // 设置默认生效日期为今天08:00
+                const now = new Date();
+                const defaultDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T08:00`;
+                setEffectiveDate(defaultDate);
+                setShowAddModal(true);
+              }}
               className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
