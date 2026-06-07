@@ -27,12 +27,18 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
   const user = useAuthStore((state) => state.user);
   const { records, addRecord, updateRecord, loading } = useRecords(user?.id || null);
 
+  // 获取今天08:00的默认日期时间
+  const getDefaultDateTime = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T08:00`;
+  };
+
   const [formData, setFormData] = useState({
     platform: '',
     principal: '',
     interest_rate: '',
     currency: 'CNY' as CurrencyType,
-    start_date: '',
+    start_date: getDefaultDateTime(),
     end_date: '',
     is_long_term: false,
     redemption_date: '',
