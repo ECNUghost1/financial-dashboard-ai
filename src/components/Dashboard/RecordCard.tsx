@@ -75,11 +75,11 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
         </div>
       )}
       
-      <div className="p-6">
-        <div className="flex items-start justify-between">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-gray-800">{record.platform}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800">{record.platform}</h3>
               {record.is_long_term && (
                 <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">长期</span>
               )}
@@ -87,98 +87,100 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">{getCurrencyName(record.currency)}</span>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <p className="text-sm text-gray-500">本金</p>
-                <p className="font-semibold text-gray-800">{formatCurrencyWithSymbol(record.principal, record.currency)}</p>
+                <p className="text-xs sm:text-sm text-gray-500">本金</p>
+                <p className="font-semibold text-gray-800 text-sm sm:text-base">{formatCurrencyWithSymbol(record.principal, record.currency)}</p>
                 {record.currency !== 'CNY' && (
                   <p className="text-xs text-gray-400">≈ ¥{principalCNY.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm text-gray-500">年利率</p>
-                <p className="font-semibold text-primary-600">{record.interest_rate}%</p>
+                <p className="text-xs sm:text-sm text-gray-500">年利率</p>
+                <p className="font-semibold text-primary-600 text-sm sm:text-base">{record.interest_rate}%</p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-start sm:justify-end">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 sm:p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              {expanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
             <button
               onClick={() => navigate(`/edit/${record.id}`)}
-              className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              className="p-2 sm:p-2.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
             >
-              <Edit2 className="w-5 h-5" />
+              <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={handleDuplicate}
-              className={`p-2 ${copied ? 'text-green-600' : 'text-gray-400 hover:text-blue-600'} hover:bg-blue-50 rounded-lg transition-colors`}
+              className={`p-2 sm:p-2.5 ${copied ? 'text-green-600' : 'text-gray-400 hover:text-blue-600'} hover:bg-blue-50 rounded-lg transition-colors`}
               title={copied ? '已复制' : '复制记录'}
             >
-              <Copy className="w-5 h-5" />
+              <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button
-              onClick={() => setShowRedeemConfirm(true)}
-              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-              title="赎回"
-            >
-              <DollarSign className="w-5 h-5" />
-            </button>
+            {!isExpired && (
+              <button
+                onClick={() => setShowRedeemConfirm(true)}
+                className="p-2 sm:p-2.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                title="赎回"
+              >
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            )}
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
         {expanded && (
-          <div className="mt-6 pt-6 border-t border-gray-100 animate-slide-in">
-            <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="mt-4 pt-4 sm:mt-6 sm:pt-6 border-t border-gray-100 animate-slide-in">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
               <div className="bg-blue-50 rounded-lg p-3">
                 <p className="text-xs text-blue-600">每日利息</p>
-                <p className="font-semibold text-blue-700">{formatCurrencyWithSymbol(dailyInterest, record.currency)}</p>
+                <p className="font-semibold text-blue-700 text-sm">{formatCurrencyWithSymbol(dailyInterest, record.currency)}</p>
                 {record.currency !== 'CNY' && (
                   <p className="text-xs text-blue-400">≈ ¥{dailyInterestCNY.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</p>
                 )}
               </div>
               <div className="bg-cyan-50 rounded-lg p-3">
                 <p className="text-xs text-cyan-600">每月利息</p>
-                <p className="font-semibold text-cyan-700">{formatCurrencyWithSymbol(monthlyInterest, record.currency)}</p>
+                <p className="font-semibold text-cyan-700 text-sm">{formatCurrencyWithSymbol(monthlyInterest, record.currency)}</p>
                 {record.currency !== 'CNY' && (
                   <p className="text-xs text-cyan-400">≈ ¥{monthlyInterestCNY.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</p>
                 )}
               </div>
               <div className="bg-green-50 rounded-lg p-3">
                 <p className="text-xs text-green-600">累计收益</p>
-                <p className="font-semibold text-green-700">{formatCurrencyWithSymbol(accumulatedInterest, record.currency)}</p>
+                <p className="font-semibold text-green-700 text-sm">{formatCurrencyWithSymbol(accumulatedInterest, record.currency)}</p>
                 {record.currency !== 'CNY' && (
                   <p className="text-xs text-green-400">≈ ¥{accumulatedInterestCNY.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-500">开始日期</span>
-                <span className="text-gray-800">{formatDate(record.start_date)}</span>
+                <span className="text-gray-800 break-all max-w-[60%] text-right">{formatDate(record.start_date)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-500">截止日期</span>
-                <span className="text-gray-800">
+                <span className="text-gray-800 break-all max-w-[60%] text-right">
                   {record.is_long_term ? '长期持有' : record.end_date ? formatDate(record.end_date) : '未设置'}
                 </span>
               </div>
               {record.redemption_date && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-gray-500">赎回日期</span>
-                  <span className="text-gray-800">{formatDate(record.redemption_date)}</span>
+                  <span className="text-gray-800 break-all max-w-[60%] text-right">{formatDate(record.redemption_date)}</span>
                 </div>
               )}
             </div>

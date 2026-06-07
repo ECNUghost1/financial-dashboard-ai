@@ -55,16 +55,16 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, secondaryValue
   const colors = colorClasses[color];
 
   return (
-    <div className={`${colors.bg} rounded-xl p-6 border ${colors.border} hover:shadow-md transition-shadow`}>
+    <div className={`${colors.bg} rounded-xl p-4 sm:p-6 border ${colors.border} hover:shadow-md transition-shadow`}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className={`text-2xl font-bold ${colors.text} mt-2`}>{value}</p>
-          {secondaryValue && <p className="text-sm text-gray-400 mt-1">{secondaryValue}</p>}
-          {subtitle && !secondaryValue && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-gray-500">{title}</p>
+          <p className={`text-lg sm:text-xl md:text-2xl font-bold ${colors.text} mt-2 break-all`}>{value}</p>
+          {secondaryValue && <p className="text-xs sm:text-sm text-gray-400 mt-1 break-all">{secondaryValue}</p>}
+          {subtitle && !secondaryValue && <p className="text-xs sm:text-sm text-gray-400 mt-1">{subtitle}</p>}
           {subtitle && secondaryValue && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-12 h-12 ${colors.icon} rounded-lg flex items-center justify-center`}>
+        <div className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.icon} rounded-lg flex items-center justify-center flex-shrink-0 ml-3`}>
           {iconComponents[icon]}
         </div>
       </div>
