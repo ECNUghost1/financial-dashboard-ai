@@ -6,7 +6,7 @@ import { Save, ArrowLeft, Calculator } from 'lucide-react';
 import { calculateDailyInterest, calculateMonthlyInterest } from '../../utils/calculations';
 import { formatCurrencyWithSymbol } from '../../utils/exchangeRate';
 import { toLocalISOString, toDatetimeLocal } from '../../utils/timezone';
-import type { FinancialRecord, CurrencyType } from '../../types';
+import type { CurrencyType } from '../../types';
 
 const CURRENCIES: { value: CurrencyType; label: string }[] = [
   { value: 'CNY', label: '人民币 (CNY)' },
@@ -85,7 +85,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
       return;
     }
 
-    const recordData: Omit<FinancialRecord, 'id' | 'created_at' | 'updated_at'> = {
+    const recordData = {
       user_id: user!.id,
       platform: formData.platform,
       principal,

@@ -14,6 +14,8 @@ export interface FinancialRecord {
   platform: string;
   principal: number;
   interest_rate: number;
+  initial_principal: number;
+  initial_interest_rate: number;
   currency: CurrencyType;
   start_date: string;
   end_date?: string;
@@ -62,4 +64,32 @@ export interface ExchangeRates {
   JPY: number;
   HKD: number;
   CNY: number;
+}
+
+export type TransactionType = 'principal' | 'rate';
+
+export interface TransactionHistory {
+  id: string;
+  record_id: string;
+  type: TransactionType;
+  old_value: number;
+  new_value: number;
+  effective_date: string;
+  created_at: string;
+}
+
+export interface InterestPeriod {
+  start_date: Date;
+  end_date: Date;
+  principal: number;
+  rate: number;
+  days: number;
+  interest: number;
+}
+
+export interface RecordHistoryView {
+  record: FinancialRecord;
+  transactions: TransactionHistory[];
+  periods: InterestPeriod[];
+  totalInterest: number;
 }

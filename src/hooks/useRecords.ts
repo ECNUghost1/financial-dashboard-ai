@@ -117,13 +117,16 @@ export const useRecords = (userId: string | null) => {
     });
   };
 
-  const addRecord = async (record: Omit<FinancialRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addRecord = async (record: Omit<FinancialRecord, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'initial_principal' | 'initial_interest_rate'>) => {
     try {
       const { data, error } = await supabase
         .from('financial_records')
         .insert({
           user_id: userId,
           ...record,
+          // 保存初始本金和利率
+          initial_principal: record.principal,
+          initial_interest_rate: record.interest_rate,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -207,6 +210,26 @@ export const useRecords = (userId: string | null) => {
     return addRecord(newRecord);
   };
 
+  const getRecordById = async (id: string): Promise<FinancialRecord | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('financial_records')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('获取记录失败:', error);
+        return null;
+      }
+      
+      return data || null;
+    } catch (err) {
+      console.error('获取记录失败:', err);
+      return null;
+    }
+  };
+
   const getSummary = (): RecordSummary => {
     const rates = exchangeRates || { CNY: 1, USD: 7.24, EUR: 7.86, GBP: 9.15, JPY: 0.048, HKD: 0.93 };
     
@@ -273,6 +296,7 @@ export const useRecords = (userId: string | null) => {
     updateRecord,
     deleteRecord,
     duplicateRecord,
+    getRecordById,
     getSummary,
     getActiveRecords,
     getExpiredRecords,
