@@ -43,15 +43,22 @@ export const generateInterestPeriods = (
   const periods: InterestPeriod[] = [];
   
   const startDate = new Date(record.start_date);
+  const now = new Date();
   
-  // 确定最终结束日期：优先使用赎回日期，然后是截止日期，最后是当前日期
+  // 确定最终结束日期：
+  // 1. 如果有赎回日期，用赎回日期
+  // 2. 如果当前时间小于截止日期，用当前时间（未到期）
+  // 3. 如果当前时间大于等于截止日期，用截止日期（已到期）
+  // 4. 长期持有或无截止日期，用当前时间
   let endDate: Date;
   if (record.redemption_date) {
     endDate = new Date(record.redemption_date);
   } else if (record.end_date && !record.is_long_term) {
-    endDate = new Date(record.end_date);
+    const recordEndDate = new Date(record.end_date);
+    // 当前时间小于截止日期，用当前时间；否则用截止日期
+    endDate = now < recordEndDate ? now : recordEndDate;
   } else {
-    endDate = new Date();
+    endDate = now;
   }
   
   if (startDate >= endDate) {
