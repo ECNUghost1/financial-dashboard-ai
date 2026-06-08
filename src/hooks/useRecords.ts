@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import type { FinancialRecord, RecordSummary, ExchangeRates } from '../types';
-import { calculateDailyInterest, calculateMonthlyInterest, calculateAnnualizedInterest, calculateAccumulatedInterest, isNearExpiration, isRecordExpiredOrRedeemed } from '../utils/calculations';
+import type { FinancialRecord, RecordSummary, ExchangeRates, TransactionHistory } from '../types';
+import { calculateDailyInterest, calculateMonthlyInterest, calculateAnnualizedInterest, calculateAccumulatedInterestWithTransactions, isNearExpiration, isRecordExpiredOrRedeemed } from '../utils/calculations';
 import { fetchExchangeRates, convertToCNY, convertToUSD } from '../utils/exchangeRate';
 
 export const useRecords = (userId: string | null) => {
   const [records, setRecords] = useState<FinancialRecord[]>([]);
+  const [transactions, setTransactions] = useState<Record<string, TransactionHistory[]>>({});
   const [loading, setLoading] = useState(true);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
 
@@ -69,6 +70,32 @@ export const useRecords = (userId: string | null) => {
           // 自定义排序
           const sortedRecords = sortRecords(data || []);
           setRecords(sortedRecords);
+        }
+
+        // 加载所有交易历史数据
+        const { data: transactionData, error: transactionError } = await supabase
+          .from('transaction_history')
+          .select('*');
+        
+        if (transactionError) {
+          console.error('加载交易历史失败:', transactionError);
+          setTransactions({});
+        } else {
+          // 按 record_id 分组交易历史
+          const groupedTransactions: Record<string, TransactionHistory[]> = {};
+          (transactionData || []).forEach((t: TransactionHistory) => {
+            if (!groupedTransactions[t.record_id]) {
+              groupedTransactions[t.record_id] = [];
+            }
+            groupedTransactions[t.record_id].push(t);
+          });
+          // 按生效日期排序每组交易历史
+          Object.keys(groupedTransactions).forEach((key) => {
+            groupedTransactions[key].sort((a, b) => 
+              new Date(a.effective_date).getTime() - new Date(b.effective_date).getTime()
+            );
+          });
+          setTransactions(groupedTransactions);
         }
       }
     } catch (err) {
@@ -253,9 +280,9 @@ export const useRecords = (userId: string | null) => {
     const totalAnnualizedInterestCNY = records.reduce((sum, r) => sum + convertToCNY(calculateAnnualizedInterest(r.principal, r.interest_rate, r.start_date, r.redemption_date), r.currency, rates), 0);
     const totalAnnualizedInterestUSD = records.reduce((sum, r) => sum + convertToUSD(calculateAnnualizedInterest(r.principal, r.interest_rate, r.start_date, r.redemption_date), r.currency, rates), 0);
     
-    const totalAccumulatedInterest = records.reduce((sum, r) => sum + calculateAccumulatedInterest(r), 0);
-    const totalAccumulatedInterestCNY = records.reduce((sum, r) => sum + convertToCNY(calculateAccumulatedInterest(r), r.currency, rates), 0);
-    const totalAccumulatedInterestUSD = records.reduce((sum, r) => sum + convertToUSD(calculateAccumulatedInterest(r), r.currency, rates), 0);
+    const totalAccumulatedInterest = records.reduce((sum, r) => sum + calculateAccumulatedInterestWithTransactions(r, transactions[r.id] || []), 0);
+    const totalAccumulatedInterestCNY = records.reduce((sum, r) => sum + convertToCNY(calculateAccumulatedInterestWithTransactions(r, transactions[r.id] || []), r.currency, rates), 0);
+    const totalAccumulatedInterestUSD = records.reduce((sum, r) => sum + convertToUSD(calculateAccumulatedInterestWithTransactions(r, transactions[r.id] || []), r.currency, rates), 0);
     
     // 即将到期只统计未赎回的
     const upcomingExpirations = activeRecords.filter((r) => !r.is_long_term && r.end_date && isNearExpiration(r.end_date)).length;
