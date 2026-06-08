@@ -134,17 +134,18 @@ export const Calendar: React.FC = () => {
   };
 
   const createDayData = (date: Date, isCurrentMonth: boolean): DayData => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // 今天结束时间
-    const isToday = date.toDateString() === today.toDateString();
+    const now = new Date();
+    const todayDateOnly = new Date();
+    todayDateOnly.setHours(0, 0, 0, 0);
+    const isToday = date.toDateString() === todayDateOnly.toDateString();
     
-    // 只计算过去日期的收益（包括今天）
-    const isPastOrToday = date <= today;
+    // 只计算过去日期的收益
+    const isPastDate = date < todayDateOnly;
     
     const dayRecords: { record: FinancialRecord; dailyInterest: number; dailyInterestUSD: number; principal: number; rate: number }[] = [];
     let totalInterestUSD = 0;
     
-    if (isPastOrToday) {
+    if (isPastDate || isToday) {
       records.forEach(record => {
         // 使用本地时间处理
         const startDate = toLocalDate(record.start_date);
@@ -157,13 +158,12 @@ export const Calendar: React.FC = () => {
           endDate = toLocalDate(record.end_date);
         } else {
           // 长期持有且未赎回，截止到今天
-          endDate = today;
+          endDate = isToday ? now : todayDateOnly;
         }
         
         // 利息从开始日期当天就计算，但收益是T+1发放（第二天早上8点后到账）
         // 所以日历上显示的是"已到账"的收益，不是当天计算的利息
         
-        // 设置时间为中午12点用于日期比较
         const checkDate = new Date(date);
         checkDate.setHours(12, 0, 0, 0);
         
@@ -174,12 +174,18 @@ export const Calendar: React.FC = () => {
         endDateNoTime.setHours(23, 59, 59, 999);
         
         // T+1发放：当天的利息要到第二天早上8点后才能到账
-        // 计算应该显示的利息日期（前一天的利息）
+        // 结算日期 = 实际日期 - 1天
         const interestDate = new Date(checkDate);
         interestDate.setDate(interestDate.getDate() - 1);
         
+        // 如果是今天且当前时间在早上8点之前，T+1的收益还没到账
+        if (isToday && now.getHours() < 8) {
+          // 今天不显示任何利息（昨天的利息还没到账）
+          return;
+        }
+        
         // 检查利息日期是否在计息范围内
-        // 利息日期 >= 开始日期，且当天结算日期 <= 结束日期
+        // 利息日期 >= 开始日期，且当前日期 <= 结束日期
         if (interestDate >= startDateNoTime && checkDate <= endDateNoTime) {
           // 获取利息日期的本金和利率
           const transactions = transactionsByRecordId[record.id] || [];
@@ -206,12 +212,12 @@ export const Calendar: React.FC = () => {
 
   // 通过遍历当月每一天来计算月度收益（确保与日历每日收益一致）
   const calculateMonthlyStats = (year: number, month: number): MonthlyStats => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const todayDateOnly = new Date();
+    todayDateOnly.setHours(0, 0, 0, 0);
     
     // 如果月份在未来，返回0
     const monthStart = new Date(year, month, 1);
-    if (monthStart > today) {
+    if (monthStart > todayDateOnly) {
       return {
         month: `${year}-${String(month + 1).padStart(2, '0')}`,
         totalInterestUSD: 0,
