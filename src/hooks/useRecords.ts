@@ -144,16 +144,16 @@ export const useRecords = (userId: string | null) => {
     });
   };
 
-  const addRecord = async (record: Omit<FinancialRecord, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'initial_principal' | 'initial_interest_rate'>) => {
+  const addRecord = async (record: Omit<FinancialRecord, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
     try {
       const { data, error } = await supabase
         .from('financial_records')
         .insert({
           user_id: userId,
           ...record,
-          // 保存初始本金和利率
-          initial_principal: record.principal,
-          initial_interest_rate: record.interest_rate,
+          // 如果没有提供初始本金和利率，使用当前值
+          initial_principal: record.initial_principal || record.principal,
+          initial_interest_rate: record.initial_interest_rate || record.interest_rate,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -231,6 +231,8 @@ export const useRecords = (userId: string | null) => {
       start_date: record.start_date,
       end_date: record.end_date,
       is_long_term: record.is_long_term,
+      initial_principal: record.initial_principal || record.principal,
+      initial_interest_rate: record.initial_interest_rate || record.interest_rate,
       // 复制时清除赎回日期
     };
     

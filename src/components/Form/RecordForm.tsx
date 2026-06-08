@@ -37,7 +37,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
     platform: '',
     principal: '',
     interest_rate: '',
-    currency: 'CNY' as CurrencyType,
+    currency: 'USD' as CurrencyType,
     start_date: getDefaultDateTime(),
     end_date: '',
     is_long_term: false,
@@ -45,6 +45,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
   });
 
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (type === 'edit' && id && !loading) {
@@ -68,22 +69,28 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.platform || !formData.principal || !formData.interest_rate || !formData.start_date) {
+    if (!formData.platform || !formData.start_date) {
       setError('请填写必填字段');
       return;
     }
 
-    const principal = parseFloat(formData.principal);
-    const interestRate = parseFloat(formData.interest_rate);
+    let principal: number | undefined;
+    let interestRate: number | undefined;
 
-    if (isNaN(principal) || principal <= 0) {
-      setError('请输入有效的本金金额');
-      return;
-    }
+    // 新增模式下验证本金和利率
+    if (type === 'add') {
+      principal = parseFloat(formData.principal);
+      interestRate = parseFloat(formData.interest_rate);
 
-    if (isNaN(interestRate) || interestRate < 0) {
-      setError('请输入有效的年利率');
-      return;
+      if (isNaN(principal) || principal <= 0) {
+        setError('请输入有效的本金金额');
+        return;
+      }
+
+      if (isNaN(interestRate) || interestRate < 0) {
+        setError('请输入有效的年利率');
+        return;
+      }
     }
 
     if (!formData.is_long_term && !formData.end_date) {
@@ -91,24 +98,33 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
       return;
     }
 
-    const recordData = {
-      user_id: user!.id,
-      platform: formData.platform,
-      principal,
-      interest_rate: interestRate,
-      currency: formData.currency,
-      start_date: toLocalISOString(formData.start_date),
-      end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
-      is_long_term: formData.is_long_term,
-      redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
-    };
+    setIsSubmitting(true);
 
     if (type === 'add') {
-      await addRecord(recordData);
+      await addRecord({
+        platform: formData.platform,
+        principal: principal!,
+        interest_rate: interestRate!,
+        initial_principal: principal!,
+        initial_interest_rate: interestRate!,
+        currency: formData.currency,
+        start_date: toLocalISOString(formData.start_date),
+        end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
+        is_long_term: formData.is_long_term,
+        redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
+      });
     } else if (type === 'edit' && id) {
-      await updateRecord(id, recordData);
+      await updateRecord(id, {
+        platform: formData.platform,
+        currency: formData.currency,
+        start_date: toLocalISOString(formData.start_date),
+        end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
+        is_long_term: formData.is_long_term,
+        redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
+      });
     }
 
+    setIsSubmitting(false);
     navigate('/dashboard');
   };
 
@@ -151,8 +167,9 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">货币类型 *</label>
             <select
               value={formData.currency}
+              disabled={type === 'edit'}
               onChange={(e) => setFormData({ ...formData, currency: e.target.value as CurrencyType })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               {CURRENCIES.map((currency) => (
                 <option key={currency.value} value={currency.value}>
@@ -160,6 +177,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
                 </option>
               ))}
             </select>
+            {type === 'edit' && <p className="text-xs text-gray-400 mt-1">币种不可修改，请通过交易历史调整</p>}
           </div>
 
           <div>
@@ -168,10 +186,12 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
               type="number"
               step="0.01"
               value={formData.principal}
+              disabled={type === 'edit'}
               onChange={(e) => setFormData({ ...formData, principal: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="请输入本金金额"
             />
+            {type === 'edit' && <p className="text-xs text-gray-400 mt-1">本金不可修改，请通过交易历史调整</p>}
           </div>
 
           <div>
@@ -180,10 +200,12 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
               type="number"
               step="0.01"
               value={formData.interest_rate}
+              disabled={type === 'edit'}
               onChange={(e) => setFormData({ ...formData, interest_rate: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="请输入年利率"
             />
+            {type === 'edit' && <p className="text-xs text-gray-400 mt-1">利率不可修改，请通过交易历史调整</p>}
           </div>
 
           <div>
@@ -191,9 +213,11 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
             <input
               type="datetime-local"
               value={formData.start_date}
+              disabled={type === 'edit'}
               onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
+            {type === 'edit' && <p className="text-xs text-gray-400 mt-1">开始日期不可修改</p>}
           </div>
 
           <div className="flex items-center">
@@ -286,10 +310,23 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-5 h-5" />
-            {type === 'add' ? '保存记录' : '更新记录'}
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                保存中...
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                {type === 'add' ? '保存记录' : '更新记录'}
+              </>
+            )}
           </button>
         </div>
       </form>
