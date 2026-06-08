@@ -4,7 +4,7 @@ import type { FinancialRecord, ExchangeRates, TransactionHistory } from '../../t
 import { calculateDailyInterest, calculateMonthlyInterest, calculateAccumulatedInterestWithTransactions, formatDate, isNearExpiration, isRecordExpiredOrRedeemed } from '../../utils/calculations';
 import { formatCurrencyWithSymbol, getCurrencyName, convertToCNY } from '../../utils/exchangeRate';
 import { Countdown } from './Countdown';
-import { Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, DollarSign, Copy, History } from 'lucide-react';
+import { Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, DollarSign, Copy, History, MoreHorizontal } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
 interface RecordCardProps {
@@ -21,11 +21,25 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRedeemConfirm, setShowRedeemConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
   const isNear = record.end_date ? isNearExpiration(record.end_date) : false;
   const isExpired = isRecordExpiredOrRedeemed(record);
 
-  // 获取交易历史数据
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.more-menu-container')) {
+        setShowMoreMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -126,48 +140,67 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
             </div>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-start sm:justify-end">
+          <div className="flex items-center gap-2 flex-wrap justify-start sm:justify-end">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="p-2 sm:p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              {expanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <span className="hidden sm:inline">{expanded ? '收起' : '展开'}</span>
             </button>
             <button
               onClick={() => navigate(`/edit/${record.id}`)}
-              className="p-2 sm:p-2.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
             >
-              <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Edit2 className="w-4 h-4" />
+              <span className="hidden sm:inline">编辑</span>
             </button>
-            <button
-              onClick={handleDuplicate}
-              className={`p-2 sm:p-2.5 ${copied ? 'text-green-600' : 'text-gray-400 hover:text-blue-600'} hover:bg-blue-50 rounded-lg transition-colors`}
-              title={copied ? '已复制' : '复制记录'}
-            >
-              <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-            {!isExpired && (
-              <button
-                onClick={() => setShowRedeemConfirm(true)}
-                className="p-2 sm:p-2.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-                title="赎回"
-              >
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            )}
             <button
               onClick={() => navigate(`/history/${record.id}`)}
-              className="p-2 sm:p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-              title="查看历史"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
             >
-              <History className="w-4 h-4 sm:w-5 sm:h-5" />
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline">历史</span>
             </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+            
+            <div className="relative more-menu-container">
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">更多</span>
+              </button>
+              
+              {showMoreMenu && (
+                <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 z-30 py-1 animate-fade-in">
+                  <button
+                    onClick={() => { handleDuplicate(); setShowMoreMenu(false); }}
+                    className={`flex items-center gap-2 w-full px-4 py-2 text-sm transition-colors ${copied ? 'text-green-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <Copy className="w-4 h-4" />
+                    {copied ? '已复制' : '复制记录'}
+                  </button>
+                  {!isExpired && (
+                    <button
+                      onClick={() => { setShowRedeemConfirm(true); setShowMoreMenu(false); }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition-colors"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      赎回
+                    </button>
+                  )}
+                  <div className="border-t border-gray-100 my-1" />
+                  <button
+                    onClick={() => { setShowDeleteConfirm(true); setShowMoreMenu(false); }}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    删除
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
