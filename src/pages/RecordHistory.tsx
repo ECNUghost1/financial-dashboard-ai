@@ -20,6 +20,7 @@ export const RecordHistory: React.FC = () => {
   const [transactionType, setTransactionType] = useState<TransactionType>('principal');
   const [newValue, setNewValue] = useState('');
   const [effectiveDate, setEffectiveDate] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -49,6 +50,7 @@ export const RecordHistory: React.FC = () => {
   const handleAddTransaction = async () => {
     if (!newValue) return;
     
+    setIsLoading(true);
     const oldValue = transactionType === 'principal' ? record.principal : record.interest_rate;
     const success = await createTransaction(
       transactionType,
@@ -56,6 +58,7 @@ export const RecordHistory: React.FC = () => {
       parseFloat(newValue),
       effectiveDate || undefined
     );
+    setIsLoading(false);
     
     if (success) {
       // 重新获取理财记录以显示更新后的值
@@ -167,7 +170,7 @@ export const RecordHistory: React.FC = () => {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {transactions.map((transaction) => (
+              {transactions.map((transaction, index) => (
                 <div key={transaction.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 ${getTransactionTypeColor(transaction.type)} rounded-lg flex items-center justify-center`}>
@@ -192,7 +195,13 @@ export const RecordHistory: React.FC = () => {
                   </div>
                   <button
                     onClick={() => handleDeleteTransaction(transaction.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-4"
+                    disabled={index !== transactions.length - 1}
+                    className={`p-2 rounded-lg transition-colors ml-4 ${
+                      index === transactions.length - 1
+                        ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                        : 'text-gray-200 cursor-not-allowed'
+                    }`}
+                    title={index === transactions.length - 1 ? '删除此变更记录' : '只能从最后一条记录开始删除'}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -335,10 +344,20 @@ export const RecordHistory: React.FC = () => {
               </button>
               <button
                 onClick={handleAddTransaction}
-                disabled={!newValue}
-                className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!newValue || isLoading}
+                className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                确认添加
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    添加中...
+                  </>
+                ) : (
+                  '确认添加'
+                )}
               </button>
             </div>
           </div>
