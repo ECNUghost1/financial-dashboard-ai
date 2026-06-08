@@ -1,4 +1,4 @@
-import type { Countdown, InterestCalculation, FinancialRecord } from '../types';
+import type { Countdown, InterestCalculation, FinancialRecord, TransactionHistory } from '../types';
 
 // 每天利息结算时间（UTC+8 早上8点）
 const INTEREST_SETTLEMENT_HOUR = 8;
@@ -153,4 +153,73 @@ export const calculateAllInterests = (
     monthly: calculateMonthlyInterest(principal, rate),
     annualized: calculateAnnualizedInterest(principal, rate, startDate, redemptionDate),
   };
+};
+
+// 计算带交易历史的累计收益（分段计算）
+export const calculateAccumulatedInterestWithTransactions = (
+  record: FinancialRecord,
+  transactions: TransactionHistory[]
+): number => {
+  // 如果没有交易历史，使用原来的简单计算
+  if (!transactions || transactions.length === 0) {
+    return calculateAccumulatedInterest(record);
+  }
+  
+  // 有交易历史，使用分段计算
+  const startDate = new Date(record.start_date);
+  const now = new Date();
+  
+  // 确定结束日期
+  let endDate: Date;
+  if (record.redemption_date) {
+    endDate = new Date(record.redemption_date);
+  } else if (record.end_date && !record.is_long_term) {
+    const recordEndDate = new Date(record.end_date);
+    endDate = now < recordEndDate ? now : recordEndDate;
+  } else {
+    endDate = now;
+  }
+  
+  if (startDate >= endDate) {
+    return 0;
+  }
+  
+  // 按生效日期排序交易历史
+  const sortedTransactions = [...transactions]
+    .filter(t => new Date(t.effective_date) <= endDate)
+    .sort((a, b) => new Date(a.effective_date).getTime() - new Date(b.effective_date).getTime());
+  
+  // 使用初始本金和利率
+  let currentPrincipal = record.initial_principal || record.principal;
+  let currentRate = record.initial_interest_rate || record.interest_rate;
+  let periodStart = startDate;
+  let totalInterest = 0;
+  
+  // 计算每个阶段的收益
+  for (const transaction of sortedTransactions) {
+    const periodEnd = new Date(transaction.effective_date);
+    if (periodEnd > periodStart && periodEnd <= endDate) {
+      const days = calculateInterestDays(periodStart, periodEnd);
+      const periodInterest = currentPrincipal * currentRate / 100 * days / 365;
+      totalInterest += periodInterest;
+      
+      // 更新本金或利率
+      if (transaction.type === 'principal') {
+        currentPrincipal = transaction.new_value;
+      } else if (transaction.type === 'rate') {
+        currentRate = transaction.new_value;
+      }
+      
+      periodStart = periodEnd;
+    }
+  }
+  
+  // 计算最后一个阶段的收益（从最后一个变更到结束日期）
+  if (periodStart < endDate) {
+    const days = calculateInterestDays(periodStart, endDate);
+    const periodInterest = currentPrincipal * currentRate / 100 * days / 365;
+    totalInterest += periodInterest;
+  }
+  
+  return totalInterest;
 };

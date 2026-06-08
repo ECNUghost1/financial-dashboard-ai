@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { FinancialRecord, ExchangeRates } from '../../types';
-import { calculateDailyInterest, calculateMonthlyInterest, calculateAccumulatedInterest, formatDate, isNearExpiration, isRecordExpiredOrRedeemed } from '../../utils/calculations';
+import type { FinancialRecord, ExchangeRates, TransactionHistory } from '../../types';
+import { calculateDailyInterest, calculateMonthlyInterest, calculateAccumulatedInterestWithTransactions, formatDate, isNearExpiration, isRecordExpiredOrRedeemed } from '../../utils/calculations';
 import { formatCurrencyWithSymbol, getCurrencyName, convertToCNY } from '../../utils/exchangeRate';
 import { Countdown } from './Countdown';
-import { Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, DollarSign, Copy } from 'lucide-react';
+import { Edit2, Trash2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle, DollarSign, Copy, History } from 'lucide-react';
+import { supabase } from '../../utils/supabase';
 
 interface RecordCardProps {
   record: FinancialRecord;
@@ -20,8 +21,30 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRedeemConfirm, setShowRedeemConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
   const isNear = record.end_date ? isNearExpiration(record.end_date) : false;
   const isExpired = isRecordExpiredOrRedeemed(record);
+
+  // 获取交易历史数据
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('transaction_history')
+          .select('*')
+          .eq('record_id', record.id)
+          .order('effective_date', { ascending: true });
+        
+        if (!error && data) {
+          setTransactions(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch transactions:', err);
+      }
+    };
+    
+    fetchTransactions();
+  }, [record.id]);
 
   const handleDuplicate = () => {
     onDuplicate(record.id);
@@ -33,7 +56,8 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
   
   const dailyInterest = calculateDailyInterest(record.principal, record.interest_rate);
   const monthlyInterest = calculateMonthlyInterest(record.principal, record.interest_rate);
-  const accumulatedInterest = calculateAccumulatedInterest(record);
+  // 使用带交易历史的累计收益计算
+  const accumulatedInterest = calculateAccumulatedInterestWithTransactions(record, transactions);
   
   // 转换为人民币
   const dailyInterestCNY = convertToCNY(dailyInterest, record.currency, rates);
@@ -131,6 +155,13 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
+            <button
+              onClick={() => navigate(`/history/${record.id}`)}
+              className="p-2 sm:p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+              title="查看历史"
+            >
+              <History className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
