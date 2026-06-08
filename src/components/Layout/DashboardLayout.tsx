@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { LayoutDashboard, LogOut, Plus, User } from 'lucide-react';
+import { LayoutDashboard, LogOut, Plus, User, Calendar } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -40,6 +40,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               >
                 <Plus className="w-5 h-5" />
                 <span className="hidden sm:inline">添加记录</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/calendar')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Calendar className="w-5 h-5" />
+                <span className="hidden sm:inline">理财日历</span>
               </button>
 
               <button

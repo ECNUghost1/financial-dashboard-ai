@@ -11,14 +11,32 @@ export const calculateMonthlyInterest = (principal: number, rate: number): numbe
   return principal * rate / 100 / 12;
 };
 
-// 获取考虑8点分界线的结算日期
+// 获取考虑8点分界线的结算日期（UTC时间版本）
 // 早上8点之前，计息日属于前一天；8点之后，计息日属于当天
-const getSettlementDate = (date: Date): Date => {
+// 注意：date参数应该是UTC时间
+export const getSettlementDate = (date: Date): Date => {
   // 转换为UTC+8时间
   const utc8Hour = date.getUTCHours() + 8;
   
   // 如果UTC+8时间还没到8点，则实际计息日是前一天
   if (utc8Hour < INTEREST_SETTLEMENT_HOUR) {
+    const settlementDate = new Date(date);
+    settlementDate.setDate(settlementDate.getDate() - 1);
+    return settlementDate;
+  }
+  
+  return date;
+};
+
+// 获取考虑8点分界线的结算日期（本地时间版本）
+// 早上8点之前，计息日属于前一天；8点之后，计息日属于当天
+// 注意：date参数应该是本地时间
+export const getSettlementDateLocal = (date: Date): Date => {
+  // 使用本地时间判断
+  const localHour = date.getHours();
+  
+  // 如果本地时间还没到8点，则实际计息日是前一天
+  if (localHour < INTEREST_SETTLEMENT_HOUR) {
     const settlementDate = new Date(date);
     settlementDate.setDate(settlementDate.getDate() - 1);
     return settlementDate;
