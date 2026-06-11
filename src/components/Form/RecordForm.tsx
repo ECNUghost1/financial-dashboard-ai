@@ -6,7 +6,8 @@ import { Save, ArrowLeft, Calculator } from 'lucide-react';
 import { calculateDailyInterest, calculateMonthlyInterest } from '../../utils/calculations';
 import { formatCurrencyWithSymbol } from '../../utils/exchangeRate';
 import { toLocalISOString, toDatetimeLocal } from '../../utils/timezone';
-import type { CurrencyType } from '../../types';
+import type { CurrencyType, PlatformTag } from '../../types';
+import { PLATFORM_TAGS } from '../../types';
 
 const CURRENCIES: { value: CurrencyType; label: string }[] = [
   { value: 'CNY', label: '人民币 (CNY)' },
@@ -35,6 +36,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
 
   const [formData, setFormData] = useState({
     platform: '',
+    platform_tag: '' as PlatformTag | '',
     principal: '',
     interest_rate: '',
     currency: 'USD' as CurrencyType,
@@ -53,6 +55,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
       if (record) {
         setFormData({
           platform: record.platform,
+          platform_tag: record.platform_tag || '',
           principal: record.principal.toString(),
           interest_rate: record.interest_rate.toString(),
           currency: record.currency,
@@ -101,28 +104,30 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
     setIsSubmitting(true);
 
     if (type === 'add') {
-      await addRecord({
-        platform: formData.platform,
-        principal: principal!,
-        interest_rate: interestRate!,
-        initial_principal: principal!,
-        initial_interest_rate: interestRate!,
-        currency: formData.currency,
-        start_date: toLocalISOString(formData.start_date),
-        end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
-        is_long_term: formData.is_long_term,
-        redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
-      });
-    } else if (type === 'edit' && id) {
-      await updateRecord(id, {
-        platform: formData.platform,
-        currency: formData.currency,
-        start_date: toLocalISOString(formData.start_date),
-        end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
-        is_long_term: formData.is_long_term,
-        redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
-      });
-    }
+        await addRecord({
+          platform: formData.platform,
+          platform_tag: formData.platform_tag || undefined,
+          principal: principal!,
+          interest_rate: interestRate!,
+          initial_principal: principal!,
+          initial_interest_rate: interestRate!,
+          currency: formData.currency,
+          start_date: toLocalISOString(formData.start_date),
+          end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
+          is_long_term: formData.is_long_term,
+          redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
+        });
+      } else if (type === 'edit' && id) {
+        await updateRecord(id, {
+          platform: formData.platform,
+          platform_tag: formData.platform_tag || undefined,
+          currency: formData.currency,
+          start_date: toLocalISOString(formData.start_date),
+          end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
+          is_long_term: formData.is_long_term,
+          redemption_date: formData.redemption_date ? toLocalISOString(formData.redemption_date) : undefined,
+        });
+      }
 
     setIsSubmitting(false);
     navigate('/dashboard');
@@ -161,6 +166,22 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               placeholder="例如：支付宝、微信理财"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">平台标签</label>
+            <select
+              value={formData.platform_tag}
+              onChange={(e) => setFormData({ ...formData, platform_tag: e.target.value as PlatformTag })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            >
+              <option value="">请选择平台标签</option>
+              {PLATFORM_TAGS.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

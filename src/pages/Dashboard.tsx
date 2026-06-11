@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '../components/Layout/DashboardLayout';
 import { StatCard } from '../components/Dashboard/StatCard';
 import { RecordCard } from '../components/Dashboard/RecordCard';
@@ -6,13 +6,16 @@ import { useAuthStore } from '../store/authStore';
 import { useRecords } from '../hooks/useRecords';
 import { formatCurrencyWithSymbol } from '../utils/exchangeRate';
 import { migrateFromLocalStorage, checkLegacyData } from '../utils/migration';
-import { FileText, RefreshCw, Database, AlertCircle } from 'lucide-react';
+import { FileText, RefreshCw, Database, AlertCircle, Filter } from 'lucide-react';
+import type { PlatformTag } from '../types';
+import { PLATFORM_TAGS } from '../types';
 
 export const Dashboard: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const { loading, deleteRecord, updateRecord, duplicateRecord, getSummary, getActiveRecords, getExpiredRecords, exchangeRates, loadRecords } = useRecords(user?.id || null);
   const summary = getSummary();
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
+  const [selectedPlatformTags, setSelectedPlatformTags] = useState<PlatformTag[]>([]);
   
   // 数据迁移相关状态
   const [hasLegacyData, setHasLegacyData] = useState(false);
@@ -49,7 +52,30 @@ export const Dashboard: React.FC = () => {
 
   const activeRecords = getActiveRecords();
   const expiredRecords = getExpiredRecords();
-  const displayRecords = activeTab === 'active' ? activeRecords : expiredRecords;
+  const rawRecords = activeTab === 'active' ? activeRecords : expiredRecords;
+  
+  const displayRecords = useMemo(() => {
+    if (selectedPlatformTags.length === 0) {
+      return rawRecords;
+    }
+    return rawRecords.filter(record => 
+      record.platform_tag && selectedPlatformTags.includes(record.platform_tag)
+    );
+  }, [rawRecords, selectedPlatformTags]);
+
+  // 切换标签选择
+  const togglePlatformTag = (tag: PlatformTag) => {
+    setSelectedPlatformTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  // 清除所有标签选择
+  const clearPlatformTags = () => {
+    setSelectedPlatformTags([]);
+  };
 
   if (loading) {
     return (
@@ -181,6 +207,50 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <RefreshCw className="w-4 h-4" />
             <span>汇率更新: {exchangeRates ? '已获取' : '获取中...'}</span>
+          </div>
+        </div>
+
+        {/* 平台标签筛选 */}
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Filter className="w-4 h-4" />
+            <span>平台筛选：</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {PLATFORM_TAGS.map((tag) => {
+              const count = rawRecords.filter(r => r.platform_tag === tag).length;
+              return (
+                <label
+                  key={tag}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm cursor-pointer transition-all ${
+                    selectedPlatformTags.includes(tag)
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatformTags.includes(tag)}
+                    onChange={() => togglePlatformTag(tag)}
+                    className="sr-only"
+                  />
+                  <span>{tag}</span>
+                  {count > 0 && (
+                    <span className={`text-xs ${selectedPlatformTags.includes(tag) ? 'text-purple-100' : 'text-gray-400'}`}>
+                      ({count})
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+            {selectedPlatformTags.length > 0 && (
+              <button
+                onClick={clearPlatformTags}
+                className="px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                清除筛选
+              </button>
+            )}
           </div>
         </div>
 

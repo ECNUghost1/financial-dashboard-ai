@@ -16,6 +16,7 @@ create table if not exists public.financial_records (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
   platform text not null,
+  platform_tag text,
   principal numeric not null,
   interest_rate numeric not null,
   initial_principal numeric not null,

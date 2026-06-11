@@ -178,10 +178,17 @@ export const useRecords = (userId: string | null) => {
 
   const updateRecord = async (id: string, updates: Partial<FinancialRecord>) => {
     try {
+      // 处理 undefined 值，将其转换为 null 以便正确清除数据库字段
+      const processedUpdates = { ...updates };
+      if (updates.is_long_term === true) {
+        // 如果设置为长期持有，清除 end_date
+        processedUpdates.end_date = null as any;
+      }
+      
       const { error } = await supabase
         .from('financial_records')
         .update({
-          ...updates,
+          ...processedUpdates,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);
@@ -193,7 +200,7 @@ export const useRecords = (userId: string | null) => {
       
       setRecords((prev) =>
           sortRecords(prev.map((r) =>
-            r.id === id ? { ...r, ...updates, updated_at: new Date().toISOString() } : r
+            r.id === id ? { ...r, ...processedUpdates, updated_at: new Date().toISOString() } : r
           ))
         );
     } catch (err) {
@@ -225,6 +232,7 @@ export const useRecords = (userId: string | null) => {
     
     const newRecord = {
       platform: record.platform,
+      platform_tag: record.platform_tag,
       principal: record.principal,
       interest_rate: record.interest_rate,
       currency: record.currency,

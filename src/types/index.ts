@@ -8,10 +8,36 @@ export interface User {
 
 export type CurrencyType = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'HKD';
 
+export type PlatformTag = 
+  | '币安交易所' 
+  | '币安钱包' 
+  | 'OK交易所' 
+  | 'OK钱包' 
+  | 'BG交易所' 
+  | 'BG钱包' 
+  | 'GATE交易所' 
+  | 'GATE钱包' 
+  | 'BYBIT交易所' 
+  | 'BYBIT钱包';
+
+export const PLATFORM_TAGS: PlatformTag[] = [
+  '币安交易所',
+  '币安钱包',
+  'OK交易所',
+  'OK钱包',
+  'BG交易所',
+  'BG钱包',
+  'GATE交易所',
+  'GATE钱包',
+  'BYBIT交易所',
+  'BYBIT钱包',
+];
+
 export interface FinancialRecord {
   id: string;
   user_id: string;
   platform: string;
+  platform_tag?: PlatformTag;
   principal: number;
   interest_rate: number;
   initial_principal: number;

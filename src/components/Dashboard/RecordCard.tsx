@@ -23,7 +23,8 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
   const [copied, setCopied] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
-  const isNear = record.end_date ? isNearExpiration(record.end_date) : false;
+  // 长期持有的记录不应该显示"即将到期"
+  const isNear = !record.is_long_term && record.end_date ? isNearExpiration(record.end_date) : false;
   const isExpired = isRecordExpiredOrRedeemed(record);
 
   useEffect(() => {
@@ -118,6 +119,9 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base sm:text-lg font-semibold text-gray-800">{record.platform}</h3>
+              {record.platform_tag && (
+                <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">{record.platform_tag}</span>
+              )}
               {record.is_long_term && (
                 <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">长期</span>
               )}
