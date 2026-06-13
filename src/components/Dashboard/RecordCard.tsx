@@ -122,6 +122,9 @@ export const RecordCard: React.FC<RecordCardProps> = ({ record, onDelete, onRede
               {record.platform_tag && (
                 <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">{record.platform_tag}</span>
               )}
+              {record.asset_type && (
+                <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-xs rounded-full">{record.asset_type}</span>
+              )}
               {record.is_long_term && (
                 <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">长期</span>
               )}

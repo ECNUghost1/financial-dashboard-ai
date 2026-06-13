@@ -7,8 +7,8 @@ import { useRecords } from '../hooks/useRecords';
 import { formatCurrencyWithSymbol } from '../utils/exchangeRate';
 import { migrateFromLocalStorage, checkLegacyData } from '../utils/migration';
 import { FileText, RefreshCw, Database, AlertCircle, Filter } from 'lucide-react';
-import type { PlatformTag } from '../types';
-import { PLATFORM_TAGS } from '../types';
+import type { PlatformTag, AssetType } from '../types';
+import { PLATFORM_TAGS, ASSET_TYPES } from '../types';
 
 export const Dashboard: React.FC = () => {
   const user = useAuthStore((state) => state.user);
@@ -16,6 +16,7 @@ export const Dashboard: React.FC = () => {
   const summary = getSummary();
   const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
   const [selectedPlatformTags, setSelectedPlatformTags] = useState<PlatformTag[]>([]);
+  const [selectedAssetTypes, setSelectedAssetTypes] = useState<AssetType[]>([]);
   
   // 数据迁移相关状态
   const [hasLegacyData, setHasLegacyData] = useState(false);
@@ -54,14 +55,42 @@ export const Dashboard: React.FC = () => {
   const expiredRecords = getExpiredRecords();
   const rawRecords = activeTab === 'active' ? activeRecords : expiredRecords;
   
-  const displayRecords = useMemo(() => {
-    if (selectedPlatformTags.length === 0) {
-      return rawRecords;
-    }
+  // 平台筛选后的记录（用于等价物计数）
+  const platformFilteredRecords = useMemo(() => {
+    if (selectedPlatformTags.length === 0) return rawRecords;
     return rawRecords.filter(record => 
       record.platform_tag && selectedPlatformTags.includes(record.platform_tag)
     );
   }, [rawRecords, selectedPlatformTags]);
+  
+  // 等价物筛选后的记录（用于平台计数）
+  const assetFilteredRecords = useMemo(() => {
+    if (selectedAssetTypes.length === 0) return rawRecords;
+    return rawRecords.filter(record => 
+      record.asset_type && selectedAssetTypes.includes(record.asset_type)
+    );
+  }, [rawRecords, selectedAssetTypes]);
+  
+  // 最终显示的记录（两个筛选同时生效）
+  const displayRecords = useMemo(() => {
+    let filtered = rawRecords;
+    
+    // 平台标签筛选
+    if (selectedPlatformTags.length > 0) {
+      filtered = filtered.filter(record => 
+        record.platform_tag && selectedPlatformTags.includes(record.platform_tag)
+      );
+    }
+    
+    // 等价物筛选
+    if (selectedAssetTypes.length > 0) {
+      filtered = filtered.filter(record => 
+        record.asset_type && selectedAssetTypes.includes(record.asset_type)
+      );
+    }
+    
+    return filtered;
+  }, [rawRecords, selectedPlatformTags, selectedAssetTypes]);
 
   // 切换标签选择
   const togglePlatformTag = (tag: PlatformTag) => {
@@ -75,6 +104,20 @@ export const Dashboard: React.FC = () => {
   // 清除所有标签选择
   const clearPlatformTags = () => {
     setSelectedPlatformTags([]);
+  };
+
+  // 切换等价物选择
+  const toggleAssetType = (asset: AssetType) => {
+    setSelectedAssetTypes(prev => 
+      prev.includes(asset) 
+        ? prev.filter(a => a !== asset)
+        : [...prev, asset]
+    );
+  };
+
+  // 清除所有等价物选择
+  const clearAssetTypes = () => {
+    setSelectedAssetTypes([]);
   };
 
   if (loading) {
@@ -211,14 +254,14 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* 平台标签筛选 */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-start gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500 shrink-0 pt-1.5">
             <Filter className="w-4 h-4" />
-            <span>平台筛选：</span>
+            <span className="whitespace-nowrap">平台筛选：</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {PLATFORM_TAGS.map((tag) => {
-              const count = rawRecords.filter(r => r.platform_tag === tag).length;
+              const count = assetFilteredRecords.filter(r => r.platform_tag === tag).length;
               return (
                 <label
                   key={tag}
@@ -247,6 +290,50 @@ export const Dashboard: React.FC = () => {
               <button
                 onClick={clearPlatformTags}
                 className="px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                清除筛选
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 等价物筛选 */}
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-start gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500 shrink-0 pt-1.5">
+            <Filter className="w-4 h-4" />
+            <span className="whitespace-nowrap">等价物筛选：</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ASSET_TYPES.map((asset) => {
+              const count = platformFilteredRecords.filter(r => r.asset_type === asset).length;
+              return (
+                <label
+                  key={asset}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm cursor-pointer transition-all ${
+                    selectedAssetTypes.includes(asset)
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedAssetTypes.includes(asset)}
+                    onChange={() => toggleAssetType(asset)}
+                    className="sr-only"
+                  />
+                  <span>{asset}</span>
+                  {count > 0 && (
+                    <span className={`text-xs ${selectedAssetTypes.includes(asset) ? 'text-amber-100' : 'text-gray-400'}`}>
+                      ({count})
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+            {selectedAssetTypes.length > 0 && (
+              <button
+                onClick={clearAssetTypes}
+                className="px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 transition-colors"
               >
                 清除筛选
               </button>

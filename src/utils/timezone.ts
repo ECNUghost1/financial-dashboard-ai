@@ -22,11 +22,14 @@ export const toLocalISOString = (datetimeLocal: string): string => {
  * @param isoString - ISO 格式的时间字符串（UTC 时间，如 "2024-01-01T02:00:00Z"）
  * @returns datetime-local 格式的时间字符串（本地时间，如 "2024-01-01T10:00"）
  */
-export const toDatetimeLocal = (isoString: string | undefined): string => {
+export const toDatetimeLocal = (isoString: string | undefined | null): string => {
   if (!isoString) return '';
 
   // 解析 ISO 字符串（JavaScript 会自动处理时区转换）
   const date = new Date(isoString);
+
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) return '';
 
   // 获取本地时间的各个部分
   const year = date.getFullYear();

@@ -236,6 +236,7 @@ export const useRecords = (userId: string | null) => {
       principal: record.principal,
       interest_rate: record.interest_rate,
       currency: record.currency,
+      asset_type: record.asset_type,
       start_date: record.start_date,
       end_date: record.end_date,
       is_long_term: record.is_long_term,

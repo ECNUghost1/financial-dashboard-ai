@@ -8,6 +8,18 @@ export interface User {
 
 export type CurrencyType = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'HKD';
 
+// 等价物类型（本金类型）
+export type AssetType = 'BTC' | 'USDT' | 'USD1' | 'USDC' | 'U' | 'XAUT';
+
+export const ASSET_TYPES: AssetType[] = [
+  'BTC',
+  'USDT',
+  'USD1',
+  'USDC',
+  'U',
+  'XAUT',
+];
+
 export type PlatformTag = 
   | '币安交易所' 
   | '币安钱包' 
@@ -43,6 +55,7 @@ export interface FinancialRecord {
   initial_principal: number;
   initial_interest_rate: number;
   currency: CurrencyType;
+  asset_type: AssetType; // 等价物类型（BTC, USDT, USD1, USDC, U, XAUT）
   start_date: string;
   end_date?: string;
   is_long_term: boolean;

@@ -6,8 +6,8 @@ import { Save, ArrowLeft, Calculator } from 'lucide-react';
 import { calculateDailyInterest, calculateMonthlyInterest } from '../../utils/calculations';
 import { formatCurrencyWithSymbol } from '../../utils/exchangeRate';
 import { toLocalISOString, toDatetimeLocal } from '../../utils/timezone';
-import type { CurrencyType, PlatformTag } from '../../types';
-import { PLATFORM_TAGS } from '../../types';
+import type { CurrencyType, PlatformTag, AssetType } from '../../types';
+import { PLATFORM_TAGS, ASSET_TYPES } from '../../types';
 
 const CURRENCIES: { value: CurrencyType; label: string }[] = [
   { value: 'CNY', label: '人民币 (CNY)' },
@@ -40,6 +40,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
     principal: '',
     interest_rate: '',
     currency: 'USD' as CurrencyType,
+    asset_type: 'USDT' as AssetType,
     start_date: getDefaultDateTime(),
     end_date: '',
     is_long_term: false,
@@ -59,6 +60,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
           principal: record.principal.toString(),
           interest_rate: record.interest_rate.toString(),
           currency: record.currency,
+          asset_type: record.asset_type || 'USDT',
           start_date: toDatetimeLocal(record.start_date),
           end_date: toDatetimeLocal(record.end_date) || '',
           is_long_term: record.is_long_term,
@@ -112,6 +114,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
           initial_principal: principal!,
           initial_interest_rate: interestRate!,
           currency: formData.currency,
+          asset_type: formData.asset_type,
           start_date: toLocalISOString(formData.start_date),
           end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
           is_long_term: formData.is_long_term,
@@ -122,6 +125,7 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
           platform: formData.platform,
           platform_tag: formData.platform_tag || undefined,
           currency: formData.currency,
+          asset_type: formData.asset_type,
           start_date: toLocalISOString(formData.start_date),
           end_date: formData.is_long_term ? undefined : toLocalISOString(formData.end_date) || undefined,
           is_long_term: formData.is_long_term,
@@ -199,6 +203,22 @@ export const RecordForm: React.FC<RecordFormProps> = ({ type }) => {
               ))}
             </select>
             {type === 'edit' && <p className="text-xs text-gray-400 mt-1">币种不可修改，请通过交易历史调整</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">等价物</label>
+            <select
+              value={formData.asset_type}
+              onChange={(e) => setFormData({ ...formData, asset_type: e.target.value as AssetType })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            >
+              {ASSET_TYPES.map((asset) => (
+                <option key={asset} value={asset}>
+                  {asset}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">本金对应的等价物类型</p>
           </div>
 
           <div>

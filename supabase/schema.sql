@@ -22,6 +22,7 @@ create table if not exists public.financial_records (
   initial_principal numeric not null,
   initial_interest_rate numeric not null,
   currency text default 'CNY' not null,
+  asset_type text not null default 'USDT', -- 等价物类型（BTC, USDT, USD1, USDC, U, XAUT）
   start_date timestamp with time zone not null,
   end_date timestamp with time zone,
   is_long_term boolean default false not null,
