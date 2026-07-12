@@ -1,0 +1,34 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    - cron: '0 0 */5 * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep Alive (RPC → fallback health)
+        run: |
+          RPC_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+            -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/ping" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json")
+
+          if [ "$RPC_STATUS" -ge 200 ] && [ "$RPC_STATUS" -lt 400 ]; then
+            echo "✅ RPC keep-alive 成功 ($RPC_STATUS)"
+            exit 0
+          fi
+
+          HEALTH_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/auth/v1/health")
+
+          if [ "$HEALTH_STATUS" -ge 200 ] && [ "$HEALTH_STATUS" -lt 400 ]; then
+            echo "✅ Health check 成功 ($HEALTH_STATUS)"
+            exit 0
+          fi
+
+          echo "❌ RPC, Health 都失败"
+          exit 1
