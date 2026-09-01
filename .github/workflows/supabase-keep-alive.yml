@@ -9,26 +9,45 @@ jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL secret 未配置！请前往 Settings > Secrets and variables > Actions 添加"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret 未配置！请前往 Settings > Secrets and variables > Actions 添加"
+            exit 1
+          fi
+          echo "Secrets 已配置"
+
       - name: Keep Alive (RPC → fallback health)
         run: |
+          echo "尝试 RPC ping..."
           RPC_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
             -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/ping" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json")
 
+          echo "RPC 返回状态码: $RPC_STATUS"
+
           if [ "$RPC_STATUS" -ge 200 ] && [ "$RPC_STATUS" -lt 400 ]; then
             echo "✅ RPC keep-alive 成功 ($RPC_STATUS)"
             exit 0
           fi
 
+          echo "RPC 失败，尝试 health check..."
           HEALTH_STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
             "${{ secrets.SUPABASE_URL }}/auth/v1/health")
+
+          echo "Health check 返回状态码: $HEALTH_STATUS"
 
           if [ "$HEALTH_STATUS" -ge 200 ] && [ "$HEALTH_STATUS" -lt 400 ]; then
             echo "✅ Health check 成功 ($HEALTH_STATUS)"
             exit 0
           fi
 
-          echo "❌ RPC, Health 都失败"
+          echo "❌ RPC 和 Health check 都失败，Supabase 项目可能已暂停"
+          echo "请前往 https://supabase.com/dashboard 手动恢复项目"
           exit 1

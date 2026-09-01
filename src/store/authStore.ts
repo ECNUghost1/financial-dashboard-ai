@@ -134,6 +134,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
+        clearTimeout(forceEndTimeout);
         if (session?.user) {
           const basicUser = createUserFromAuthUser(session.user);
           set({ user: basicUser, isLoading: false });
@@ -143,12 +144,10 @@ export const useAuthStore = create<AuthState>((set) => ({
             useAuthStore.setState({ user });
           });
         } else {
-          clearTimeout(forceEndTimeout);
           set({ user: null, isLoading: false });
         }
       })
       .catch(() => {
-        clearTimeout(forceEndTimeout);
         set({ user: null, isLoading: false });
       });
   },
