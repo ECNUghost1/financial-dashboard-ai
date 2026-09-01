@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { LayoutDashboard, LogOut, Plus, User, Calendar } from 'lucide-react';
+import { LayoutDashboard, LogOut, Plus, User, Calendar, BarChart3 } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,12 +26,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-lg flex items-center justify-center">
                 <LayoutDashboard className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-xl font-bold text-gray-800">理财看板</h1>
-            </div>
+            </button>
 
             <div className="flex items-center gap-4">
               <button
@@ -48,6 +51,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               >
                 <Calendar className="w-5 h-5" />
                 <span className="hidden sm:inline">理财日历</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/statistics')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="hidden sm:inline">统计概览</span>
               </button>
 
               <button

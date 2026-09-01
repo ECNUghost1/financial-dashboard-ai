@@ -8,10 +8,11 @@ interface StatCardProps {
   subtitle?: string;
   icon: 'trending' | 'dollar' | 'calendar' | 'alert' | 'wallet';
   color: 'primary' | 'cyan' | 'green' | 'red' | 'blue';
+  decimalPlaces?: number;
 }
 
 // 格式化大数字，使用 K/M/B 后缀
-const formatLargeNumber = (valueStr: string): { display: string; original: string } => {
+const formatLargeNumber = (valueStr: string, decimalPlaces: number = 2): { display: string; original: string } => {
   // 提取货币符号和数字
   const match = valueStr.match(/^([¥$€£]?)([\d,]+\.?\d*)(.*)$/);
   if (!match) return { display: valueStr, original: valueStr };
@@ -25,16 +26,16 @@ const formatLargeNumber = (valueStr: string): { display: string; original: strin
   let unit: string = '';
   
   if (num >= 1_000_000_000) {
-    displayNum = (num / 1_000_000_000).toFixed(2);
+    displayNum = (num / 1_000_000_000).toFixed(decimalPlaces);
     unit = 'B';
   } else if (num >= 1_000_000) {
-    displayNum = (num / 1_000_000).toFixed(2);
+    displayNum = (num / 1_000_000).toFixed(decimalPlaces);
     unit = 'M';
   } else if (num >= 10_000) {
-    displayNum = (num / 1_000).toFixed(2);
+    displayNum = (num / 1_000).toFixed(decimalPlaces);
     unit = 'K';
   } else {
-    displayNum = num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    displayNum = num.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: decimalPlaces });
   }
   
   return {
@@ -43,13 +44,13 @@ const formatLargeNumber = (valueStr: string): { display: string; original: strin
   };
 };
 
-export const StatCard: React.FC<StatCardProps> = ({ title, value, secondaryValue, subtitle, icon, color }) => {
+export const StatCard: React.FC<StatCardProps> = ({ title, value, secondaryValue, subtitle, icon, color, decimalPlaces = 2 }) => {
   const iconComponents = {
-    trending: <TrendingUp className="w-6 h-6" />,
-    dollar: <DollarSign className="w-6 h-6" />,
-    calendar: <Calendar className="w-6 h-6" />,
-    alert: <AlertCircle className="w-6 h-6" />,
-    wallet: <Wallet className="w-6 h-6" />,
+    trending: <TrendingUp className="w-3.5 h-3.5" />,
+    dollar: <DollarSign className="w-3.5 h-3.5" />,
+    calendar: <Calendar className="w-3.5 h-3.5" />,
+    alert: <AlertCircle className="w-3.5 h-3.5" />,
+    wallet: <Wallet className="w-3.5 h-3.5" />,
   };
 
   const colorClasses = {
@@ -86,8 +87,8 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, secondaryValue
   };
 
   const colors = colorClasses[color];
-  const formattedValue = formatLargeNumber(value);
-  const formattedSecondary = secondaryValue ? formatLargeNumber(secondaryValue) : null;
+  const formattedValue = formatLargeNumber(value, decimalPlaces);
+  const formattedSecondary = secondaryValue ? formatLargeNumber(secondaryValue, decimalPlaces) : null;
 
   return (
     <div className={`${colors.bg} rounded-xl p-4 sm:p-6 border ${colors.border} hover:shadow-md transition-shadow`}>
@@ -111,7 +112,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, secondaryValue
           {subtitle && !secondaryValue && <p className="text-xs sm:text-sm text-gray-400 mt-1">{subtitle}</p>}
           {subtitle && secondaryValue && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
         </div>
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.icon} rounded-lg flex items-center justify-center flex-shrink-0 ml-3`}>
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 ${colors.icon} rounded-lg flex items-center justify-center flex-shrink-0 ml-3`}>
           {iconComponents[icon]}
         </div>
       </div>

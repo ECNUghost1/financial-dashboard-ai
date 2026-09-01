@@ -8,6 +8,7 @@ import { AddRecord } from './pages/AddRecord';
 import { EditRecord } from './pages/EditRecord';
 import { RecordHistory } from './pages/RecordHistory';
 import { Calendar } from './pages/Calendar';
+import { Statistics } from './pages/Statistics';
 
 function App() {
   const { checkAuth, user, isLoading } = useAuthStore();
@@ -34,6 +35,7 @@ function App() {
         <Route path="/edit/:id" element={user ? <EditRecord /> : <Navigate to="/" />} />
         <Route path="/history/:id" element={user ? <RecordHistory /> : <Navigate to="/" />} />
         <Route path="/calendar" element={user ? <Calendar /> : <Navigate to="/" />} />
+        <Route path="/statistics" element={user ? <Statistics /> : <Navigate to="/" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

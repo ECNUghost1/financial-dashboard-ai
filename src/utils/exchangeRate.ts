@@ -18,6 +18,19 @@ const DEFAULT_RATES: ExchangeRates = {
 // 获取汇率数据的API
 const EXCHANGE_API_URL = 'https://api.exchangerate-api.com/v4/latest/CNY';
 
+// 获取汇率更新时间
+export const getExchangeRateUpdateTime = (): string => {
+  if (lastFetchTime === 0) return '默认汇率';
+  const d = new Date(lastFetchTime);
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 export const fetchExchangeRates = async (): Promise<ExchangeRates> => {
   const now = Date.now();
   

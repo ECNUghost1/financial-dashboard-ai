@@ -4,7 +4,7 @@ import { StatCard } from '../components/Dashboard/StatCard';
 import { RecordCard } from '../components/Dashboard/RecordCard';
 import { useAuthStore } from '../store/authStore';
 import { useRecords } from '../hooks/useRecords';
-import { formatCurrencyWithSymbol } from '../utils/exchangeRate';
+import { formatCurrencyWithSymbol, getExchangeRateUpdateTime, getCurrencySymbol } from '../utils/exchangeRate';
 import { migrateFromLocalStorage, checkLegacyData } from '../utils/migration';
 import { FileText, RefreshCw, Database, AlertCircle, Filter } from 'lucide-react';
 import type { PlatformTag, AssetType } from '../types';
@@ -142,27 +142,30 @@ export const Dashboard: React.FC = () => {
         />
         <StatCard
           title="累计收益"
-          value={formatCurrencyWithSymbol(summary.totalAccumulatedInterestUSD, 'USD')}
-          secondaryValue={formatCurrencyWithSymbol(summary.totalAccumulatedInterestCNY, 'CNY')}
+          value={`${getCurrencySymbol('USD')}${summary.totalAccumulatedInterestUSD.toFixed(1)}`}
+          secondaryValue={`${getCurrencySymbol('CNY')}${summary.totalAccumulatedInterestCNY.toFixed(1)}`}
           icon="wallet"
           color="green"
           subtitle="已获得收益"
+          decimalPlaces={1}
         />
         <StatCard
           title="每日收益"
-          value={formatCurrencyWithSymbol(summary.totalDailyInterestUSD, 'USD')}
-          secondaryValue={formatCurrencyWithSymbol(summary.totalDailyInterestCNY, 'CNY')}
+          value={`${getCurrencySymbol('USD')}${summary.totalDailyInterestUSD.toFixed(2)}`}
+          secondaryValue={`${getCurrencySymbol('CNY')}${summary.totalDailyInterestCNY.toFixed(2)}`}
           icon="trending"
           color="cyan"
           subtitle="预计今日收益"
+          decimalPlaces={2}
         />
         <StatCard
           title="每月收益"
-          value={formatCurrencyWithSymbol(summary.totalMonthlyInterestUSD, 'USD')}
-          secondaryValue={formatCurrencyWithSymbol(summary.totalMonthlyInterestCNY, 'CNY')}
+          value={`${getCurrencySymbol('USD')}${summary.totalMonthlyInterestUSD.toFixed(1)}`}
+          secondaryValue={`${getCurrencySymbol('CNY')}${summary.totalMonthlyInterestCNY.toFixed(1)}`}
           icon="calendar"
           color="blue"
           subtitle="预计月度收益"
+          decimalPlaces={1}
         />
         <StatCard
           title="即将到期"
@@ -249,7 +252,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <RefreshCw className="w-4 h-4" />
-            <span>汇率更新: {exchangeRates ? '已获取' : '获取中...'}</span>
+            <span>汇率: {exchangeRates ? `1 USD = ¥${exchangeRates.USD.toFixed(4)}（${getExchangeRateUpdateTime()}）` : '获取中...'}</span>
           </div>
         </div>
 
